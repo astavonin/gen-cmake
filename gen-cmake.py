@@ -9,8 +9,10 @@ def print_usage():
     print("\t-t <type>, --type=<type> generate project with <type>. Supported types:")
     print("\t\t app - generate execurable application")
     print("\t -n <name>, --name=<name> project name")
-    print("\t -s <standard>, --standard=<standard> C++ standard. C++14 is used by default")
+    print("\t -s <standard>, --standard=<standard> C++ standard. C++11 is used by default")
     print("\t\t available options are: 03, 11, 14")
+    print("\t-p <package1,package2,packageN>, --packages=<package1,package2,packageN> comma separated")
+    print("\t\tlist of libraries to link with")
 
 
 cpp_standard_template = \
@@ -21,8 +23,6 @@ cmake_app_template = \
     """cmake_minimum_required(VERSION 3.4)
 
 project({0})
-
-{1}
 
 SET (CMAKE_LIBRARY_OUTPUT_DIRECTORY
         ${{PROJECT_BINARY_DIR}}/bin
@@ -48,6 +48,8 @@ set({0}_sources main.cpp)
 
 add_executable({0} ${{{0}_sources}})
 
+{1}
+
 {3}
 """
 
@@ -60,7 +62,7 @@ add_executable({0} ${{{0}_sources}})
 class CmakeGenerator:
     project_type = ""
     project_name = ""
-    standard = "14"
+    standard = "11"
     packages = []
 
     def generate(self):
@@ -68,9 +70,11 @@ class CmakeGenerator:
         if not self.standard == "03":
             cpp_standard = cpp_standard_template.format(self.standard)
 
-        cmake_file = cmake_app_template.format(self.project_name, cpp_standard,
+        cmake_file_content = cmake_app_template.format(self.project_name, cpp_standard,
                                                self._gen_packages(), self._gen_lib_usage())
-        print("\"{}\"".format(cmake_file))
+
+        with open("CMakeLists.txt", "w") as f:
+            f.write(cmake_file_content)
 
     def is_complete(self):
         return not (self.project_type == "" or self.project_name == "")
