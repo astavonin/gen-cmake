@@ -61,6 +61,8 @@ set({0}_sources main.cpp)
 
 {1}
 
+{1}
+
 {3}
 """
 
