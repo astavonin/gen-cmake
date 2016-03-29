@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys, getopt
 
 
@@ -8,21 +10,30 @@ def print_usage():
     print("\t-h show this message")
     print("\t-t <type>, --type=<type> generate project with <type>. Supported types:")
     print("\t\t app - generate execurable application")
+    print("\t\t shared - generate dynamically linked library")
+    print("\t\t static - generate archives of object files")
     print("\t -n <name>, --name=<name> project name")
-    print("\t -s <standard>, --standard=<standard> C++ standard. C++14 is used by default")
+    print("\t -s <standard>, --standard=<standard> C++ standard. C++11 is used by default")
     print("\t\t available options are: 03, 11, 14")
+    print("\t-p <package1,package2,packageN>, --packages=<package1,package2,packageN> comma separated")
+    print("\t\tlist of libraries to link with")
 
 
 cpp_standard_template = \
     """set_property(TARGET ${{PROJECT_NAME}} PROPERTY CXX_STANDARD {0})
 set_property(TARGET ${{PROJECT_NAME}} PROPERTY CXX_STANDARD_REQUIRED ON)"""
 
-cmake_app_template = \
+dst_type_app = \
+    """add_executable(${{PROJECT_NAME}} ${{{0}_sources}})"""
+
+dst_type_lib = \
+    """add_library(${{PROJECT_NAME}} {1} ${{{0}_sources}})"""
+
+cmake_template = \
     """cmake_minimum_required(VERSION 3.4)
 
-project({0})
-
-{1}
+set(PROJECT_NAME {0})
+project(${{PROJECT_NAME}})
 
 SET (CMAKE_LIBRARY_OUTPUT_DIRECTORY
         ${{PROJECT_BINARY_DIR}}/bin
@@ -46,7 +57,9 @@ SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY
 
 set({0}_sources main.cpp)
 
-add_executable({0} ${{{0}_sources}})
+{4}
+
+{1}
 
 {3}
 """
@@ -56,11 +69,12 @@ add_executable({0} ${{{0}_sources}})
 # {1} - C++ standard
 # {2} - required packages
 # {3} - includes and linkage
+# {4} - project type (app, shared (lib), static (lib))
 
-class CmakeGenerator:
+class CMakeGenerator:
     project_type = ""
     project_name = ""
-    standard = "14"
+    standard = "11"
     packages = []
 
     def generate(self):
@@ -68,12 +82,15 @@ class CmakeGenerator:
         if not self.standard == "03":
             cpp_standard = cpp_standard_template.format(self.standard)
 
-        cmake_file = cmake_app_template.format(self.project_name, cpp_standard,
-                                               self._gen_packages(), self._gen_lib_usage())
-        print("\"{}\"".format(cmake_file))
+        cmake_file_content = cmake_template.format(self.project_name, cpp_standard,
+                                                   self._gen_packages(), self._gen_lib_usage(),
+                                                   self._gen_type_info())
+
+        with open("CMakeLists.txt", "w") as f:
+            f.write(cmake_file_content)
 
     def is_complete(self):
-        return not (self.project_type == "" or self.project_name == "")
+        return self.project_type in ("app", "shared", "static") and not self.project_name == ""
 
     def _gen_packages(self):
         pkg_template = "find_package({0} REQUIRED)\n"
@@ -99,9 +116,20 @@ class CmakeGenerator:
 
         return out
 
+    def _gen_type_info(self):
+        type_template = ""
+        if self.project_type == "app":
+            type_template = dst_type_app.format(self.project_name)
+        elif self.project_type == "shared":
+            type_template = dst_type_lib.format(self.project_name, "SHARED")
+        elif self.project_type == "static":
+            type_template = dst_type_lib.format(self.project_name, "STATIC")
+
+        return type_template
+
 
 def main():
-    generator = CmakeGenerator()
+    generator = CMakeGenerator()
     try:
         opts, args = getopt.getopt(sys.argv[1:], "ht:n:s:p:", ["type=", "name=", "standard=",
                                                                "packages="])
