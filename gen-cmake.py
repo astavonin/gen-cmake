@@ -55,21 +55,24 @@ SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY
 
 {2}
 
+{3}
+
 set({0}_sources main.cpp)
 
 {4}
 
 {1}
 
-{3}
+{5}
 """
 
 
 # {0} - project name
 # {1} - C++ standard
 # {2} - required packages
-# {3} - includes and linkage
+# {3} - includes
 # {4} - project type (app, shared (lib), static (lib))
+# {5} - linkages
 
 class CMakeGenerator:
     project_type = ""
@@ -82,9 +85,11 @@ class CMakeGenerator:
         if not self.standard == "03":
             cpp_standard = cpp_standard_template.format(self.standard)
 
+        incls, libs = self._gen_lib_usage()
+
         cmake_file_content = cmake_template.format(self.project_name, cpp_standard,
-                                                   self._gen_packages(), self._gen_lib_usage(),
-                                                   self._gen_type_info())
+                                                   self._gen_packages(), incls,
+                                                   self._gen_type_info(), libs)
 
         with open("CMakeLists.txt", "w") as f:
             f.write(cmake_file_content)
@@ -102,19 +107,17 @@ class CMakeGenerator:
         return out
 
     def _gen_lib_usage(self):
-        link_template = "target_link_libraries({0} {1})\n" \
-                        "include_directories({2})"
         link_libs = ""
         includes = ""
-        out = ""
         for package in self.packages:
             link_libs += "${{{0}_LIBRARIES}} ".format(package)
             includes += "${{{0}_INCLUDE_DIRS}} ".format(package)
 
         if not link_libs == "":
-            out = link_template.format(self.project_name, link_libs, includes)
-
-        return out
+            return "include_directories({0})".format(includes), \
+                    "target_link_libraries({0} {1})".format(self.project_name, link_libs)
+        else:
+            return "", ""
 
     def _gen_type_info(self):
         type_template = ""
