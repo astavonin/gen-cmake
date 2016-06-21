@@ -29,8 +29,54 @@ dst_type_app = \
 dst_type_lib = \
     """add_library(${{PROJECT_NAME}} {1} ${{{0}_sources}})"""
 
+makefile = \
+    """# -----------------------------------------------------------------------------
+# CMake project wrapper Makefile ----------------------------------------------
+# -----------------------------------------------------------------------------
+
+SHELL := /bin/bash
+RM    := rm -rf
+MKDIR := mkdir -p
+BUILD_DIR := build
+
+all: ./$(BUILD_DIR)/Makefile
+\t@ $(MAKE) -C $(BUILD_DIR) -j8
+
+./$(BUILD_DIR)/Makefile:
+\t@  ($(MKDIR) $(BUILD_DIR) > /dev/null)
+\t@  (cd $(BUILD_DIR) > /dev/null 2>&1 && cmake ..)
+
+clean:
+\t@ $(MAKE) -C $(BUILD_DIR) clean
+
+bench:
+\t@  (cd $(BUILD_DIR) > /dev/null && ctest -L bench --verbose)
+
+test:
+\t@  (cd $(BUILD_DIR) > /dev/null && ctest -L unit --verbose)
+
+distclean:
+\t@  ($(MKDIR) $(BUILD_DIR) > /dev/null)
+\t@  (cd $(BUILD_DIR) > /dev/null 2>&1 && cmake .. > /dev/null 2>&1)
+\t@- $(MAKE) --silent -C $(BUILD_DIR) clean || true
+\t@- $(RM) ./$(BUILD_DIR)/Makefile
+\t@- $(RM) ./$(BUILD_DIR)/CMake*
+\t@- $(RM) ./$(BUILD_DIR)/cmake.*
+\t@- $(RM) ./$(BUILD_DIR)/*.cmake
+\t@- $(RM) ./$(BUILD_DIR)/*.txt
+
+ifeq ($(findstring distclean,$(MAKECMDGOALS)),)
+\t$(MAKECMDGOALS): ./$(BUILD_DIR)/Makefile
+\t@ $(MAKE) -C $(BUILD_DIR) $(MAKECMDGOALS)
+endif
+"""
+
 cmake_template = \
     """cmake_minimum_required(VERSION 3.4)
+
+if ( ${{CMAKE_SOURCE_DIR}} STREQUAL ${{CMAKE_BINARY_DIR}} )
+    message( FATAL_ERROR "In-source builds not allowed. Please make a new directory and run CMake from there. You may need to remove CMakeCache.txt." )
+endif()
 
 set(PROJECT_NAME {0})
 project(${{PROJECT_NAME}})
@@ -93,6 +139,9 @@ class CMakeGenerator:
 
         with open("CMakeLists.txt", "w") as f:
             f.write(cmake_file_content)
+
+        with open("Makefile", "w") as f:
+            f.write(makefile)
 
     def is_complete(self):
         return self.project_type in ("app", "shared", "static") and not self.project_name == ""
