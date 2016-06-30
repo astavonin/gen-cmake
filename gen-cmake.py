@@ -37,7 +37,8 @@ makefile = \
 SHELL := /bin/bash
 RM    := rm -rf
 MKDIR := mkdir -p
-BUILD_DIR := build
+BUILD_DIR ?= build
+GENERATOR ?= Xcode
 
 all: ./$(BUILD_DIR)/Makefile
 \t@ $(MAKE) -C $(BUILD_DIR) -j8
@@ -55,20 +56,12 @@ bench:
 test:
 \t@  (cd $(BUILD_DIR) > /dev/null && ctest -L unit --verbose)
 
-distclean:
+workspace:
 \t@  ($(MKDIR) $(BUILD_DIR) > /dev/null)
-\t@  (cd $(BUILD_DIR) > /dev/null 2>&1 && cmake .. > /dev/null 2>&1)
-\t@- $(MAKE) --silent -C $(BUILD_DIR) clean || true
-\t@- $(RM) ./$(BUILD_DIR)/Makefile
-\t@- $(RM) ./$(BUILD_DIR)/CMake*
-\t@- $(RM) ./$(BUILD_DIR)/cmake.*
-\t@- $(RM) ./$(BUILD_DIR)/*.cmake
-\t@- $(RM) ./$(BUILD_DIR)/*.txt
+\t@ (cd $(BUILD_DIR) > /dev/null && cmake -G $(GENERATOR) ..)
 
-ifeq ($(findstring distclean,$(MAKECMDGOALS)),)
-\t$(MAKECMDGOALS): ./$(BUILD_DIR)/Makefile
-\t@ $(MAKE) -C $(BUILD_DIR) $(MAKECMDGOALS)
-endif
+distclean:
+\t@- $(RM) -rf ./$(BUILD_DIR)
 """
 
 cmake_template = \
