@@ -45,7 +45,7 @@ all: ./$(BUILD_DIR)/Makefile
 
 ./$(BUILD_DIR)/Makefile:
 \t@  ($(MKDIR) $(BUILD_DIR) > /dev/null)
-\t@  (cd $(BUILD_DIR) > /dev/null 2>&1 && cmake ..)
+\t@  (cd $(BUILD_DIR) > /dev/null 2>&1 && cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
 
 clean:
 \t@ $(MAKE) -C $(BUILD_DIR) clean
@@ -65,7 +65,7 @@ distclean:
 """
 
 cmake_template = \
-    """cmake_minimum_required(VERSION 3.4)
+    """cmake_minimum_required(VERSION 3.6)
 
 if ( ${{CMAKE_SOURCE_DIR}} STREQUAL ${{CMAKE_BINARY_DIR}} )
     message( FATAL_ERROR "In-source builds not allowed. Please make a new directory and run CMake from there. You may need to remove CMakeCache.txt." )
@@ -96,7 +96,7 @@ SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY
 
 {3}
 
-set({0}_sources main.cpp)
+set(${{PROJECT_NAME}}_sources main.cpp)
 
 {4}
 
@@ -156,8 +156,8 @@ class CMakeGenerator:
             includes += "${{{0}_INCLUDE_DIRS}} ".format(package)
 
         if not link_libs == "":
-            return "include_directories({0})".format(includes), \
-                    "target_link_libraries({0} {1})".format(self.project_name, link_libs)
+            return f"target_include_directories(${{PROJECT_NAME}} {includes})", \
+                    f"target_link_libraries(${{PROJECT_NAME}} {link_libs})"
         else:
             return "", ""
 
