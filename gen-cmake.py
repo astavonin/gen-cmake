@@ -132,9 +132,9 @@ find_program( CLANG_TIDY NAMES clang-tidy)
 
 # NOTE: this will slow down compilation, but you'll have static code analysis :)
 if(CLANG_TIDY)
-\tset_property(
-\t\tTARGET ${{PROJECT_NAME}}
-\t\tPROPERTY CXX_CLANG_TIDY "${{CLANG_TIDY}}]")
+    set_property(
+        TARGET ${{PROJECT_NAME}}
+        PROPERTY CXX_CLANG_TIDY "${{CLANG_TIDY}}]")
 endif()
 
 {6}
