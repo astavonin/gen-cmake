@@ -78,16 +78,16 @@ distclean:
 
 build_info = \
     """message("\\n--------------------------------\\n")
-message("PROJECT NAME:\\t\\t\\t${PROJECT_NAME}")
-message("CMAKE_SYSTEM_NAME:\\t\\t${CMAKE_SYSTEM_NAME}")
-message("CMAKE_C_COMPILER:\\t\\t${CMAKE_C_COMPILER}")
+message("PROJECT NAME:\\t\\t${PROJECT_NAME}")
+message("CMAKE_SYSTEM_NAME:\\t${CMAKE_SYSTEM_NAME}")
+message("CMAKE_C_COMPILER:\\t${CMAKE_C_COMPILER}")
 message("CMAKE_CXX_COMPILER:\\t${CMAKE_CXX_COMPILER}")
-message("CMAKE_GENERATOR:\\t\\t${CMAKE_GENERATOR}")
-message("CMAKE_BUILD_TYPE:\\t\\t${CMAKE_BUILD_TYPE}")
-message("CMAKE_BINARY_DIR:\\t\\t${CMAKE_BINARY_DIR}")
-message("CMAKE_MODULE_PATH:\\t\\t${CMAKE_MODULE_PATH}")
-message("CMAKE_PREFIX_PATH:\\t\\t${CMAKE_PREFIX_PATH}")
-message("clang-tidy:\\t\\t\\t${CLANG_TIDY}")
+message("CMAKE_GENERATOR:\\t${CMAKE_GENERATOR}")
+message("CMAKE_BUILD_TYPE:\\t${CMAKE_BUILD_TYPE}")
+message("CMAKE_BINARY_DIR:\\t${CMAKE_BINARY_DIR}")
+message("CMAKE_MODULE_PATH:\\t${CMAKE_MODULE_PATH}")
+message("CMAKE_PREFIX_PATH:\\t${CMAKE_PREFIX_PATH}")
+message("clang-tidy:\\t\\t${CLANG_TIDY}")
 message("\\n--------------------------------\\n")
 
 """
