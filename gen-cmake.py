@@ -37,15 +37,27 @@ makefile = \
 SHELL := /bin/bash
 RM    := rm -rf
 MKDIR := mkdir -p
+LN := ln -s
 BUILD_DIR ?= build
 GENERATOR ?= Xcode
 
-all: ./$(BUILD_DIR)/Makefile
+debug: BUILD_TYPE=Debug
+debug: ./$(BUILD_DIR)/Makefile compile_commands.json
 \t@ $(MAKE) -C $(BUILD_DIR) -j8
+
+release: BUILD_TYPE=Release
+release: ./$(BUILD_DIR)/Makefile compile_commands.json
+\t@ $(MAKE) -C $(BUILD_DIR) -j8
+
+all: ./$(BUILD_DIR)/Makefile compile_commands.json
+\t@ $(MAKE) -C $(BUILD_DIR) -j8
+
+compile_commands.json:
+    @ $(LN) $(BUILD_DIR)/compile_commands.json .
 
 ./$(BUILD_DIR)/Makefile:
 \t@  ($(MKDIR) $(BUILD_DIR) > /dev/null)
-\t@  (cd $(BUILD_DIR) > /dev/null 2>&1 && cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
+\t@  (cd $(BUILD_DIR) > /dev/null 2>&1 && cmake .. -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
 
 clean:
 \t@ $(MAKE) -C $(BUILD_DIR) clean
@@ -62,6 +74,22 @@ workspace:
 
 distclean:
 \t@- $(RM) -rf ./$(BUILD_DIR)
+"""
+
+build_info = \
+    """message("\\n--------------------------------\\n")
+message("PROJECT NAME:\\t\\t\\t${{PROJECT_NAME}}")
+message("CMAKE_SYSTEM_NAME:\\t\\t${{CMAKE_SYSTEM_NAME}}")
+message("CMAKE_C_COMPILER:\\t\\t${{CMAKE_C_COMPILER}}")
+message("CMAKE_CXX_COMPILER:\\t${{CMAKE_CXX_COMPILER}}")
+message("CMAKE_GENERATOR:\\t\\t${{CMAKE_GENERATOR}}")
+message("CMAKE_BUILD_TYPE:\\t\\t${{CMAKE_BUILD_TYPE}}")
+message("CMAKE_BINARY_DIR:\\t\\t${{CMAKE_BINARY_DIR}}")
+message("CMAKE_MODULE_PATH:\\t\\t${{CMAKE_MODULE_PATH}}")
+message("CMAKE_PREFIX_PATH:\\t\\t${{CMAKE_PREFIX_PATH}}")
+message("clang-tidy:\\t\\t\\t${{CLANG_TIDY}}")
+message("\\n--------------------------------\\n")
+
 """
 
 cmake_template = \
@@ -96,6 +124,21 @@ SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY
 
 {3}
 
+# TODO: uncomment if have unit tests
+# enable_testing()
+
+find_program( CLANG_TIDY NAMES clang-tidy)
+# NOTE: you can add search paths for example `PATHS /usr/local/opt/llvm/bin/`
+
+# NOTE: this will slow down compilation, but you'll have static code analysis :)
+if(CLANG_TIDY)
+\tset_property(
+\t\tTARGET ${{PROJECT_NAME}}
+\t\tPROPERTY CXX_CLANG_TIDY "${{CLANG_TIDY}}]")
+endif()
+
+{6}
+
 set(${{PROJECT_NAME}}_sources main.cpp)
 
 {4}
@@ -112,6 +155,7 @@ set(${{PROJECT_NAME}}_sources main.cpp)
 # {3} - includes
 # {4} - project type (app, shared (lib), static (lib))
 # {5} - linkages
+# {6} - build information dump
 
 class CMakeGenerator:
     project_type = ""
@@ -128,7 +172,8 @@ class CMakeGenerator:
 
         cmake_file_content = cmake_template.format(self.project_name, cpp_standard,
                                                    self._gen_packages(), incls,
-                                                   self._gen_type_info(), libs)
+                                                   self._gen_type_info(), libs,
+                                                   build_info)
 
         with open("CMakeLists.txt", "w") as f:
             f.write(cmake_file_content)
@@ -157,7 +202,7 @@ class CMakeGenerator:
 
         if not link_libs == "":
             return f"target_include_directories(${{PROJECT_NAME}} {includes})", \
-                    f"target_link_libraries(${{PROJECT_NAME}} {link_libs})"
+                   f"target_link_libraries(${{PROJECT_NAME}} {link_libs})"
         else:
             return "", ""
 
