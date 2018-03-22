@@ -22,3 +22,5 @@ Options:
 Example (will generate CMakeLists.txt with C++11 and BOOST libray linkage):
 
 `> python3 gen-cmake.py -t app -n test_app -s 11 -p boost`
+
+NOTE: not tested on Windows.
