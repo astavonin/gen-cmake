@@ -24,10 +24,10 @@ cpp_standard_template = \
 set_property(TARGET ${{PROJECT_NAME}} PROPERTY CXX_STANDARD_REQUIRED ON)"""
 
 dst_type_app = \
-    """add_executable(${{PROJECT_NAME}} ${{{0}_sources}})"""
+    """add_executable(${{PROJECT_NAME}} ${{${{PROJECT_NAME}}_sources}})"""
 
 dst_type_lib = \
-    """add_library(${{PROJECT_NAME}} {1} ${{{0}_sources}})"""
+    """add_library(${{PROJECT_NAME}} {1} ${{${{PROJECT_NAME}}_sources}})"""
 
 makefile = \
     """# -----------------------------------------------------------------------------
