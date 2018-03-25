@@ -130,18 +130,18 @@ SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY
 find_program( CLANG_TIDY NAMES clang-tidy)
 # NOTE: you can add search paths for example `PATHS /usr/local/opt/llvm/bin/`
 
-# NOTE: this will slow down compilation, but you'll have static code analysis :)
-if(CLANG_TIDY)
-    set_property(
-        TARGET ${{PROJECT_NAME}}
-        PROPERTY CXX_CLANG_TIDY "${{CLANG_TIDY}}]")
-endif()
-
 {6}
 
 set(${{PROJECT_NAME}}_sources main.cpp)
 
 {4}
+
+# NOTE: this will slow down compilation, but you'll have static code analysis :)
+if(CLANG_TIDY)
+    set_property(
+        TARGET ${{PROJECT_NAME}}
+        PROPERTY CXX_CLANG_TIDY "${{CLANG_TIDY}}")
+endif()
 
 {1}
 
