@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import sys, getopt
+import sys, getopt, os
 
 
 def print_usage():
@@ -243,6 +243,11 @@ def main():
             print("Invalid argument")
             print_usage()
             sys.exit(2)
+
+
+    if os.path.exists("CMakeLists.txt") or os.path.exists("Makefile"):
+        print("CMakeLists.txt or Makefile already exists")
+        sys.exit(2)
 
     if not generator.is_complete():
         print_usage()
